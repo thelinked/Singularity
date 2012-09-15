@@ -76,9 +76,9 @@ namespace Singularity
             get { return PaddedWidth() * PaddedHeight(); }
         }
 
-        public Sprite(string _pathToImage)
+        public Sprite(string _pathToImage, int _padding)
         {
-            Padding = 2;
+            Padding = _padding;
             Path = _pathToImage;
             Name = Path.Remove(Path.Count() - 4).Split('\\').Last();
             image = Image.FromFile(_pathToImage);

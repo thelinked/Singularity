@@ -31,6 +31,7 @@ namespace Singularity
     {
         private static string path;
         private static string saveTo;
+        private static int padding = 2;
 
         static void Main(string[] args)
         {
@@ -40,7 +41,7 @@ namespace Singularity
                          where file.EndsWith("png") ||
                                file.EndsWith("jpg") ||
                                file.EndsWith("bmp")
-                         select new Sprite(file);
+                         select new Sprite(file, padding);
 
             var SpriteSheet = new SpritePacker(images);
             SpriteSheet.Pack();
@@ -53,9 +54,10 @@ namespace Singularity
             bool help = false;
             OptionSet options = new OptionSet()
             {
-                { "h", h => help = h != null },
-                { "p", p => path = p},
-                { "s", s => saveTo = s }
+                { "h=", "Get Help", h => help = h != null },
+                { "f=", "The path to the folder of sprites you want to turn into a sprite sheet",p => path = p},
+                { "s=", "The name of the reselting sprite sheet",s => saveTo = s },
+                { "p=", "Set the padding between sprites in pixels (default:2)",p =>  padding = int.Parse(p) }
             };
 
             try
@@ -76,7 +78,7 @@ namespace Singularity
 
             if (string.IsNullOrWhiteSpace(path) || string.IsNullOrWhiteSpace(saveTo))
             {
-                Console.WriteLine("");
+                Console.WriteLine("Missing or incorect args. Try using -h");
                 Environment.Exit(2);
             }
         }

@@ -39,7 +39,7 @@ namespace Singularity
         private List<Space> subSpaces;
 
         
-        //A space to be devided futher
+        //A space to be divided futher
         public Space(int _topLeftX, int _topLeftY, int _width, int _height)
         {
             SpaceState = State.Empty;
@@ -263,13 +263,30 @@ namespace Singularity
         //Pack sprites into the spritesheet.
         public void Pack()
         {
+            while (!TryPack())
+            {
+                if (Height == Width)
+                {
+                    Width *= 2;
+                }
+                else
+                {
+                    Height *= 2;
+                }
+                tree = new Space(0, 0, Width, Height);
+            }
+        }
+
+        private bool TryPack()
+        {
             foreach (var sprite in Sprites)
             {
                 if (!tree.Add(sprite))
                 {
-                    Console.WriteLine("ERROR");
+                    return false;
                 }
             }
+            return true;
         }
 
         public void Write(string _path)

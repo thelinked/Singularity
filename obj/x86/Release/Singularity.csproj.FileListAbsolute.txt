@@ -1,0 +1,15 @@
+C:\Programming\Projects\Singularity\Singularity\Singularity\bin\Release\Singularity.exe
+C:\Programming\Projects\Singularity\Singularity\Singularity\bin\Release\Singularity.pdb
+C:\Programming\Projects\Singularity\Singularity\Singularity\obj\x86\Release\ResolveAssemblyReference.cache
+C:\Programming\Projects\Singularity\Singularity\Singularity\obj\x86\Release\Singularity.exe
+C:\Programming\Projects\Singularity\Singularity\Singularity\obj\x86\Release\Singularity.pdb
+C:\Programming\Projects\Singularity\Singularity\obj\x86\Release\Singularity.exe
+C:\Programming\Projects\Singularity\Singularity\obj\x86\Release\Singularity.pdb
+C:\Programming\Projects\Singularity\Singularity\bin\Release\Singularity.exe
+C:\Programming\Projects\Singularity\Singularity\bin\Release\Singularity.pdb
+C:\Programming\Projects\Singularity\Singularity\obj\x86\Release\ResolveAssemblyReference.cache
+C:\Programming\Projects\Singularity\obj\x86\Release\Singularity.exe
+C:\Programming\Projects\Singularity\obj\x86\Release\Singularity.pdb
+C:\Programming\Projects\Singularity\bin\Release\Singularity.exe
+C:\Programming\Projects\Singularity\bin\Release\Singularity.pdb
+C:\Programming\Projects\Singularity\bin\Release\NDesk.Options.dll
