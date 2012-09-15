@@ -13,7 +13,7 @@ Singularity -h
 ```
 To actually use.
 ```
-Singularity -p "Path/to/sprite/folder" -s "save/to/this/folder"
+Singularity -p 2 -f "Path/to/sprite/folder" -s "save/to/this/folder"
 ```
 
 
