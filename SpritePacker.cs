@@ -151,16 +151,16 @@ namespace Singularity
             var metaData = GetMetaData(_Width, _Height).Select(e => e + ",") .ToList();
             metaData[metaData.Count-1] = metaData.Last().TrimEnd(',');
 
-            var luaFile = new StreamWriter(path + ".lua");
+            var luaFile = new StreamWriter(path + ".png.lua");
 
-            var Name = path.Split( '\\' ).Last();
-            luaFile.WriteLine("{");
+            var name = path.Split( '\\' ).Last();
+            luaFile.WriteLine(name +" = {\npng = {");
 
             foreach( var entry in metaData )
             {
                 luaFile.WriteLine(entry);
             }
-            luaFile.WriteLine("}");
+            luaFile.WriteLine("}}");
             luaFile.Close();
 
         }
@@ -180,7 +180,7 @@ namespace Singularity
                     yield break;
 
                 case State.Sprite:
-                    string chunk = "\t" + sprite.Name + " =\n\t{\n";
+                    string chunk = "\t" + sprite.Name + " = {\n";
 
                     int x = size.x + sprite.Padding;
                     int y = size.y + sprite.Padding;
@@ -253,8 +253,10 @@ namespace Singularity
             return true;
         }
 
-        public bool Pack(int width, int height)
+        public bool Pack(int _width, int _height)
         {
+            width = _width;
+            height = _height;
             tree = new Space(0, 0, width, height);
             return TryPack();
         }
