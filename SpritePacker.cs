@@ -16,10 +16,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
  */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Drawing;
 using System.IO;
 
@@ -33,26 +31,26 @@ namespace Singularity
             Split,
             Sprite
         }
-        private State SpaceState;
-        private Rect Size;
-        private Sprite sprite;
-        private List<Space> subSpaces;
+        private State spaceState;
+        private readonly Rect size;
+        private readonly Sprite sprite;
+        private readonly List<Space> subSpaces;
 
         
         //A space to be divided futher
         public Space(int _topLeftX, int _topLeftY, int _width, int _height)
         {
-            SpaceState = State.Empty;
+            spaceState = State.Empty;
             sprite = null;
-            Size = new Rect(_topLeftX, _topLeftY, _width, _height);
+            size = new Rect(_topLeftX, _topLeftY, _width, _height);
             subSpaces = new List<Space>();
         }
         //A space that is being used for a sprite.
-        public Space(int _topLeftX, int _topLeftY, int _width, int _height, Sprite _sprite)
+        private Space(int _topLeftX, int _topLeftY, int _width, int _height, Sprite _sprite)
         {
-            SpaceState = State.Sprite;
+            spaceState = State.Sprite;
             sprite = _sprite;
-            Size = new Rect(_topLeftX, _topLeftY, _width, _height);
+            size = new Rect(_topLeftX, _topLeftY, _width, _height);
             subSpaces = new List<Space>();
         }
 
@@ -61,7 +59,7 @@ namespace Singularity
         //If the space is split then we check if the sprite will fit into one of the child spaces
         public bool Add( Sprite _sprite )
         {
-            switch (SpaceState)
+            switch (spaceState)
             {
                 //if the space is not already split then try to split it up.
                 case State.Empty:
@@ -69,78 +67,64 @@ namespace Singularity
 
                 //If the space is already split then see if they is any room in the children spaces
                 case State.Split:
-                    var list = from space in subSpaces
-                               orderby space.Size.Area descending
-                               select space;
-
-                    foreach (var s in list )
-                    {
-                        //Try to fit sprite into each child space
-                        //If it fits in one then return.
-                        if (s.Add(_sprite))
-                        {
-                            return true;
-                        }
-                    }
-                    return false;
-
-                case State.Sprite:
-                    return false;
+                    return subSpaces.OrderByDescending(space => space.size.Area)
+                                    .Any(s => s.Add(_sprite));
 
                 default:
                     return false;
             }
         }
-        public bool Split(Sprite _sprite)
+
+        private bool Split(Sprite _sprite)
         {
             //Can the sprite fit in the remaining space?
-            if (Size.w >= _sprite.PaddedWidth() && Size.h >= _sprite.PaddedHeight())
+            if (size.w >= _sprite.PaddedWidth() && size.h >= _sprite.PaddedHeight())
             {
                 //Make a space for the sprite and insert it.
-                subSpaces.Add(new Space(Size.x,
-                                        Size.y,
+                subSpaces.Add(new Space(size.x,
+                                        size.y,
                                         _sprite.PaddedWidth(),
                                         _sprite.PaddedHeight(),
                                         _sprite));
 
                 //Carve up the remaining space so they can be used.
-                if ((Size.w - _sprite.Width) > 0)
+                if ((size.w - _sprite.Width) > 0)
                 {
-                    subSpaces.Add(new Space(Size.x + _sprite.PaddedWidth(),
-                                            Size.y ,
-                                            Size.w - _sprite.PaddedWidth(),
-                                            Size.h));
+                    subSpaces.Add(new Space(size.x + _sprite.PaddedWidth(),
+                                            size.y ,
+                                            size.w - _sprite.PaddedWidth(),
+                                            size.h));
                 }
-                if ((Size.h - _sprite.Height) > 0)
+                if ((size.h - _sprite.Height) > 0)
                 {
-                    subSpaces.Add(new Space(Size.x ,
-                                            Size.y + _sprite.PaddedHeight(),
+                    subSpaces.Add(new Space(size.x ,
+                                            size.y + _sprite.PaddedHeight(),
                                             _sprite.PaddedWidth(),
-                                            Size.h - _sprite.PaddedHeight()));
+                                            size.h - _sprite.PaddedHeight()));
                 }
 
                 //We have successfully fitted the sprite and the space is split
-                SpaceState = State.Split;
+                spaceState = State.Split;
                 return true;
             }
             //Space was too small to be split.
-            SpaceState = State.Empty;
+            spaceState = State.Empty;
             return false;
         }
 
-        public void GenerateImage(string _path)
+        public void GenerateImage(string path)
         {
-            var spriteSheet = new Bitmap(Size.w, Size.h, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            var spriteSheet = new Bitmap(size.w, size.h, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
-            using (Graphics canvas = Graphics.FromImage(spriteSheet))
+            using (var canvas = Graphics.FromImage(spriteSheet))
             {
-                WriteToImage(canvas, spriteSheet);
+                WriteToImage(canvas);
             }
-            spriteSheet.Save(_path + ".png");
+            spriteSheet.Save(path + ".png");
         }
-        private void WriteToImage(Graphics canvas, Image spriteSheet)
+        private void WriteToImage(Graphics canvas)
         {
-            switch (SpaceState)
+            switch (spaceState)
             {
                 case State.Empty:
                     break;
@@ -148,101 +132,93 @@ namespace Singularity
                 case State.Split:
                     foreach (var space in subSpaces)
                     {
-                        space.WriteToImage(canvas, spriteSheet);
+                        space.WriteToImage(canvas);
                     }
                     break;
 
                 case State.Sprite:
-                    canvas.DrawImage(sprite.image,
-                        new Rectangle(Size.x + sprite.Padding, 
-                            Size.y + sprite.Padding, 
-                            Size.w - sprite.Padding * 2,
-                            Size.h - sprite.Padding * 2));
+                    canvas.DrawImage(sprite.Image,
+                        new Rectangle(size.x + sprite.Padding, 
+                            size.y + sprite.Padding, 
+                            size.w - sprite.Padding * 2,
+                            size.h - sprite.Padding * 2));
                     break;
             }
         }
 
         public void GenerateLuaFile(string path, float _Width, float _Height)
         {
-            var MetaData = new List<string>();
-            GetMetaData(_Width, _Height, MetaData);
-            MetaData = (from entry in MetaData select entry + ",").ToList();
-            MetaData[MetaData.Count-1] = MetaData.Last().TrimEnd(',');
+            var metaData = GetMetaData(_Width, _Height).Select(e => e + ",") .ToList();
+            metaData[metaData.Count-1] = metaData.Last().TrimEnd(',');
 
-            var LuaFile = new StreamWriter(path + ".lua");
+            var luaFile = new StreamWriter(path + ".lua");
 
             var Name = path.Split( '\\' ).Last();
-            LuaFile.WriteLine("{");
+            luaFile.WriteLine("{");
 
-            foreach( var entry in MetaData )
+            foreach( var entry in metaData )
             {
-                LuaFile.WriteLine(entry);
+                luaFile.WriteLine(entry);
             }
-            LuaFile.WriteLine("}");
-            LuaFile.Close();
+            luaFile.WriteLine("}");
+            luaFile.Close();
 
         }
-        private void GetMetaData( float _Width, float _Height, List<string> _MetaData )
+        private IEnumerable<string> GetMetaData(float _Width, float _Height)
         {
-            switch (SpaceState)
+            switch (spaceState)
             {
                 case State.Empty:
-                    break;
+                    yield break;
 
                 case State.Split:
-                    foreach (var space in subSpaces)
+                    var children = subSpaces.SelectMany(space => space.GetMetaData(_Width, _Height));
+                    foreach (var line in children)
                     {
-                        space.GetMetaData(_Width, _Height, _MetaData);
+                        yield return line;
                     }
-                    break;
+                    yield break;
 
                 case State.Sprite:
                     string chunk = "\t" + sprite.Name + " =\n\t{\n";
 
-                    int x = Size.x + sprite.Padding;
-                    int y = Size.y + sprite.Padding;
-                    int w = Size.w;
-                    int h = Size.h;
+                    int x = size.x + sprite.Padding;
+                    int y = size.y + sprite.Padding;
+                    int w = size.w;
+                    int h = size.h;
 
-                    chunk += string.Format("\t\tX = {0},\n", x);
-                    chunk += string.Format("\t\tY = {0},\n", y);
-                    chunk += string.Format("\t\tW = {0},\n", w);
-                    chunk += string.Format("\t\tH = {0},\n", h);
                     chunk += string.Format("\t\tnormX = {0},\n", x / _Width);
                     chunk += string.Format("\t\tnormY = {0},\n", y / _Height);
                     chunk += string.Format("\t\tnormW = {0},\n", w / _Width);
                     chunk += string.Format("\t\tnormH = {0}\n", h / _Height);
                     chunk += "\t}";
 
-                    _MetaData.Add(chunk);
-                    break;
+                    yield return chunk;
+                    yield break;
             }
         }
     }
     
     class SpritePacker
     {
-        private List<Sprite> Sprites;
-        public Space tree;
-        int Width; 
-        int Height;
+        private readonly List<Sprite> sprites;
+        private Space tree;
+        private int width;
+        private int height;
 
-        public SpritePacker(IEnumerable<Sprite> _Sprites)
+        public SpritePacker(IEnumerable<Sprite> sprites)
         {
-            GetSpriteSheetSize(_Sprites);
-            tree = new Space(0, 0, Width, Height);
-            //Sort Sprites from biggest to last
-            Sprites = (from sprite in _Sprites
-                       orderby sprite.Area descending
-                       select sprite).ToList();
+            GetSpriteSheetSize(sprites);
+            tree = new Space(0, 0, width, height);
+            this.sprites = sprites.OrderByDescending(sprite => sprite.Area).ToList();
         }
 
-        private void GetSpriteSheetSize(IEnumerable<Sprite> _Sprites)
+        private void GetSpriteSheetSize(IEnumerable<Sprite> sprites)
         {
             bool GrowingWidth = true;
             int WidthGuess = 32, HeightGuess = 32;
-            int area = (from sprite in _Sprites select sprite.PaddedArea).Sum();
-
+            int area = sprites.Select(sprite => sprite.PaddedArea).Sum();
+            
             while (area*1.1 > WidthGuess * HeightGuess)
             {
                 if(GrowingWidth)
@@ -256,43 +232,42 @@ namespace Singularity
                 GrowingWidth = !GrowingWidth;
             }
 
-            Width = WidthGuess;
-            Height = HeightGuess;
+            width = WidthGuess;
+            height = HeightGuess;
         }
 
-        //Pack sprites into the spritesheet.
-        public void Pack()
+        public bool Pack()
         {
             while (!TryPack())
             {
-                if (Height == Width)
+                if (height == width)
                 {
-                    Width *= 2;
+                    width *= 2;
                 }
                 else
                 {
-                    Height *= 2;
+                    height *= 2;
                 }
-                tree = new Space(0, 0, Width, Height);
-            }
-        }
-
-        private bool TryPack()
-        {
-            foreach (var sprite in Sprites)
-            {
-                if (!tree.Add(sprite))
-                {
-                    return false;
-                }
+                tree = new Space(0, 0, width, height);
             }
             return true;
         }
 
-        public void Write(string _path)
+        public bool Pack(int width, int height)
         {
-            tree.GenerateImage(_path);
-            tree.GenerateLuaFile(_path, Width, Height);
+            tree = new Space(0, 0, width, height);
+            return TryPack();
+        }
+
+        private bool TryPack()
+        {
+            return sprites.All(sprite => tree.Add(sprite));
+        }
+
+        public void Write(string path)
+        {
+            tree.GenerateImage(path);
+            tree.GenerateLuaFile(path, width, height);
         }
     }
 }

@@ -16,11 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Drawing.Drawing2D;
 using System.Drawing;
 
 namespace Singularity
@@ -43,33 +39,31 @@ namespace Singularity
 
     class Sprite
     {
-        public Image image;
-        public Rect rect;
+        public readonly Image Image;
         public int Padding { get; private set; }
-        public string Path { get; private set; }
         public string Name { get; private set; }
 
         public int Width
         {
-            get{ return image.Width; }
+            get{ return Image.Width; }
         }
         public int Height
         {
-            get { return image.Height; }
+            get { return Image.Height; }
         }
 
         public int PaddedWidth()
         {
-            return image.Width + Padding * 2;
+            return Image.Width + Padding * 2;
         }
         public int PaddedHeight()
         {
-            return image.Height + Padding*2;
+            return Image.Height + Padding*2;
         }
 
         public int Area
         {
-            get { return image.Width * image.Height; }
+            get { return Image.Width * Image.Height; }
         }
         public int PaddedArea
         {
@@ -79,10 +73,8 @@ namespace Singularity
         public Sprite(string _pathToImage, int _padding)
         {
             Padding = _padding;
-            Path = _pathToImage;
-            Name = Path.Remove(Path.Count() - 4).Split('\\').Last();
-            image = Image.FromFile(_pathToImage);
-            rect = new Rect(0, 0, image.Width, image.Height);
+            Name = _pathToImage.Remove(_pathToImage.Count() - 4).Split('\\').Last();
+            Image = Image.FromFile(_pathToImage);
         }
     }
 }
